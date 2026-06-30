@@ -59,7 +59,7 @@ LRUKCache* lru_k_cache_create(int k, int capacity);
  */
 void lru_k_cache_destroy(LRUKCache* cache);
 
-/* 
+/*
   Œœ≈–¿÷»» —  ›ÿ≈Ã
  */
 
