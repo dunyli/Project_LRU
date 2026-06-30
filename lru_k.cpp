@@ -784,8 +784,7 @@ lru_k_cache_create(int k, int capacity)
  * Параметры:
  *   cache - указатель на кэш
  */
-void
-lru_k_cache_destroy(LRUKCache* cache)
+void lru_k_cache_destroy(LRUKCache* cache)
 {
     if (!cache)                                /* Если кэш NULL */
         return;
@@ -814,8 +813,7 @@ lru_k_cache_destroy(LRUKCache* cache)
  *
  * Возвращает: указатель на данные или NULL если элемент не найден
  */
-void*
-lru_k_cache_get(LRUKCache* cache, const char* key)
+void* lru_k_cache_get(LRUKCache* cache, const char* key)
 {
     CacheItem* item = hash_table_find(cache, key);  /* Ищем элемент по ключу */
 
@@ -850,8 +848,7 @@ lru_k_cache_get(LRUKCache* cache, const char* key)
  *
  * Возвращает: true если успешно, false если ошибка
  */
-bool
-lru_k_cache_put(LRUKCache* cache, const char* key, void* data, size_t data_size)
+bool lru_k_cache_put(LRUKCache* cache, const char* key, void* data, size_t data_size)
 {
     CacheItem* existing = hash_table_find(cache, key);  /* Проверяем, есть ли уже элемент */
 
@@ -912,8 +909,7 @@ lru_k_cache_put(LRUKCache* cache, const char* key, void* data, size_t data_size)
  *
  * Возвращает: true если элемент найден и удалён, false если не найден
  */
-bool
-lru_k_cache_remove(LRUKCache* cache, const char* key)
+bool lru_k_cache_remove(LRUKCache* cache, const char* key)
 {
     CacheItem* item = hash_table_find(cache, key);  /* Ищем элемент */
     if (!item || !item->is_valid)              /* Если элемент не найден */
@@ -938,8 +934,7 @@ lru_k_cache_remove(LRUKCache* cache, const char* key)
  * Параметры:
  *   cache - указатель на кэш
  */
-void
-lru_k_cache_clear(LRUKCache* cache)
+void lru_k_cache_clear(LRUKCache* cache)
 {
     CacheItem* curr = cache->lru_head;         /* Начинаем с головы LRU-списка */
     while (curr) {                             /* Пока есть элементы */
@@ -972,8 +967,7 @@ lru_k_cache_clear(LRUKCache* cache)
  *   size     - указатель для сохранения текущего размера (может быть NULL)
  *   capacity - указатель для сохранения ёмкости (может быть NULL)
  */
-void
-lru_k_cache_stats(LRUKCache* cache, int* hits, int* misses, int* size, int* capacity)
+void lru_k_cache_stats(LRUKCache* cache, int* hits, int* misses, int* size, int* capacity)
 {
     if (hits)                                  /* Если указатель не NULL */
         *hits = cache->hits;                   /* Сохраняем количество хитов */
@@ -993,8 +987,7 @@ lru_k_cache_stats(LRUKCache* cache, int* hits, int* misses, int* size, int* capa
  *
  * Возвращает: текущее количество элементов в кэше
  */
-int
-lru_k_cache_size(LRUKCache* cache)
+int lru_k_cache_size(LRUKCache* cache)
 {
     return cache->size;                        /* Возвращаем размер кэша */
 }
@@ -1007,8 +1000,7 @@ lru_k_cache_size(LRUKCache* cache)
  *
  * Возвращает: максимальное количество элементов в кэше
  */
-int
-lru_k_cache_capacity(LRUKCache* cache)
+int lru_k_cache_capacity(LRUKCache* cache)
 {
     return cache->capacity;                    /* Возвращаем ёмкость кэша */
 }
@@ -1021,8 +1013,7 @@ lru_k_cache_capacity(LRUKCache* cache)
  *
  * Возвращает: параметр K (количество обращений для учёта)
  */
-int
-lru_k_cache_k(LRUKCache* cache)
+int lru_k_cache_k(LRUKCache* cache)
 {
     return cache->k;                           /* Возвращаем параметр K */
 }
@@ -1034,8 +1025,7 @@ lru_k_cache_k(LRUKCache* cache)
  * Параметры:
  *   cache - указатель на кэш
  */
-void
-lru_k_cache_print(LRUKCache* cache)
+void lru_k_cache_print(LRUKCache* cache)
 {
     printf("LRU-K Кэш (K=%d, размер=%d/%d, хиты=%d, промахи=%d):\n",
         cache->k, cache->size, cache->capacity, cache->hits, cache->misses);
@@ -1071,8 +1061,7 @@ lru_k_cache_print(LRUKCache* cache)
  * Параметры:
  *   cache - указатель на кэш
  */
-void
-lru_k_cache_print_stats(LRUKCache* cache)
+void lru_k_cache_print_stats(LRUKCache* cache)
 {
     printf("LRU-K Статистика кэша:\n");
     printf("  K: %d\n", cache->k);
