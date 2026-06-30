@@ -704,3 +704,33 @@ select_victim(struct LRUKCache* cache)
     return cache->lru_head;                      /* Возвращаем голову LRU-списка */
 }
 
+/*
+ * Вытеснение одного элемента из кэша
+ * Удаляет выбранный элемент и освобождает память
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ */
+static void
+evict_one(struct LRUKCache* cache)
+{
+    if (cache->size == 0)                        /* Если кэш пуст */
+        return;
+
+    CacheItem* victim = select_victim(cache);    /* Выбираем элемент для вытеснения */
+    if (!victim)                                 /* Если элемента нет */
+        return;
+
+    lru_remove(cache, victim);                   /* Удаляем из LRU-списка */
+    hash_table_remove(cache, victim->key);       /* Удаляем из хеш-таблицы */
+
+    /* Удаляем из кучи, если он там есть */
+    if (victim->heap_index >= 0 && victim->heap_index < cache->heap->size) {
+        heap_remove(cache->heap, victim);
+    }
+
+    victim->is_valid = false;                    /* Помечаем как невалидный */
+    cache_item_free(victim);                     /* Освобождаем память */
+    cache->size--;                               /* Уменьшаем размер кэша */
+}
+
