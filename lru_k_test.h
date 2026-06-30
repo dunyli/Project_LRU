@@ -1,20 +1,20 @@
-/*
+п»ї/*
  * ============================================================================
  *                          lru_k_test.h
  * ============================================================================
  *
- * Заголовочный файл для тестов LRU-K кэша
+ * Р—Р°РіРѕР»РѕРІРѕС‡РЅС‹Р№ С„Р°Р№Р» РґР»СЏ С‚РµСЃС‚РѕРІ LRU-K РєСЌС€Р°
  * ============================================================================
  */
 
 #ifndef LRU_K_TEST_H
 #define LRU_K_TEST_H
 
- /* Глобальные переменные для статистики тестов */
+ /* Р“Р»РѕР±Р°Р»СЊРЅС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ РґР»СЏ СЃС‚Р°С‚РёСЃС‚РёРєРё С‚РµСЃС‚РѕРІ */
 extern int passed;
 extern int failed;
 
-/* Тесты */
+/* РўРµСЃС‚С‹ */
 void test_cache_create_destroy(void);
 void test_cache_put_get(void);
 void test_cache_eviction(void);
@@ -22,11 +22,11 @@ void test_cache_remove(void);
 void test_cache_clear(void);
 void test_cache_stats(void);
 
-/* Примеры применения */
+/* РџСЂРёРјРµСЂС‹ РїСЂРёРјРµРЅРµРЅРёСЏ */
 void example_web_cache(void);
 void example_database_cache(void);
 
-/* Вспомогательные функции */
+/* Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ С„СѓРЅРєС†РёРё */
 void test_check(const char* description, int condition);
 
 #endif /* LRU_K_TEST_H */
