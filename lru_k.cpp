@@ -268,3 +268,55 @@ heap_swap(MinHeap* heap, int i, int j)
     if (heap->items[j])
         heap->items[j]->heap_index = j;
 }
+
+/*
+ * Просеивание вверх (heapify up)
+ * Используется после вставки нового элемента для восстановления свойств кучи
+ *
+ * Параметры:
+ *   heap  - указатель на кучу
+ *   index - индекс элемента для просеивания
+ */
+static void
+heap_heapify_up(MinHeap* heap, int index)
+{
+    while (index > 0) {                /* Пока не дошли до корня */
+        int parent = (index - 1) / 2;  /* Индекс родительского узла */
+
+        /* Если родитель меньше или равен текущему — всё правильно */
+        if (heap_compare(heap->items[parent], heap->items[index]) <= 0)
+            break;
+
+        /* Иначе меняем местами */
+        heap_swap(heap, parent, index);
+        index = parent;                /* Поднимаемся вверх */
+    }
+}
+
+/*
+ * Просеивание вниз (heapify down)
+ * Используется после удаления корня или изменения приоритета
+ *
+ * Параметры:
+ *   heap  - указатель на кучу
+ *   index - индекс элемента для просеивания
+ */
+static void
+heap_heapify_down(MinHeap* heap, int index)
+{
+    int smallest = index;              /* Индекс наименьшего элемента */
+    int left = 2 * index + 1;          /* Индекс левого потомка */
+    int right = 2 * index + 2;         /* Индекс правого потомка */
+
+    /* Находим наименьший среди текущего, левого и правого */
+    if (left < heap->size && heap_compare(heap->items[left], heap->items[smallest]) < 0)
+        smallest = left;
+    if (right < heap->size && heap_compare(heap->items[right], heap->items[smallest]) < 0)
+        smallest = right;
+
+    /* Если наименьший не текущий — меняем и продолжаем */
+    if (smallest != index) {
+        heap_swap(heap, index, smallest);
+        heap_heapify_down(heap, smallest);
+    }
+}
