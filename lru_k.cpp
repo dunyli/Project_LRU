@@ -613,3 +613,94 @@ cache_item_create(const char* key, void* data, size_t data_size)
 
     return item;                                 /* Возвращаем созданный элемент */
 }
+
+/*
+ * Освобождение элемента кэша
+ * Освобождает всю связанную память
+ *
+ * Параметры:
+ *   item - элемент для освобождения
+ */
+static void
+cache_item_free(CacheItem* item)
+{
+    if (!item)                                   /* Если элемент NULL */
+        return;
+
+    if (item->access_history)                    /* Если есть история обращений */
+        access_history_free(item->access_history);  /* Освобождаем её */
+    if (item->key)                               /* Если есть ключ */
+        free(item->key);                         /* Освобождаем ключ */
+    if (item->data)                              /* Если есть данные */
+        free(item->data);                        /* Освобождаем данные */
+    free(item);                                  /* Освобождаем сам элемент */
+}
+
+/*
+ * Выбор элемента для вытеснения из кэша
+ *
+ * Алгоритм LRU-K:
+ * 1. Среди элементов с K и более обращениями выбираем тот,
+ *    у которого время K-го обращения наименьшее (самое старое)
+ * 2. Если таких элементов нет, выбираем элемент с наименьшим
+ *    количеством обращений (LRU-1)
+ * 3. Если всё ещё нет, выбираем самый старый по LRU-1
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *
+ * Возвращает: указатель на элемент для вытеснения
+ */
+static CacheItem*
+select_victim(struct LRUKCache* cache)
+{
+    CacheItem* victim = NULL;
+
+    /* 1. Проверяем элементы с K и более обращениями в куче */
+    if (cache->heap->size > 0) {
+        victim = heap_extract_min(cache->heap);  /* Берём минимальный из кучи */
+        if (victim && victim->is_valid)          /* Если элемент валиден */
+            return victim;                       /* Возвращаем его */
+    }
+
+    /* 2. Если в куче нет валидных элементов, ищем среди всех */
+    CacheItem* curr = cache->lru_head;           /* Начинаем с головы LRU-списка */
+    CacheItem* candidate = NULL;                 /* Кандидат на вытеснение */
+    int min_access_count = INT_MAX;              /* Минимальное количество обращений */
+    time_t oldest_time = 0;                      /* Самое старое время */
+
+    while (curr) {                               /* Обходим все элементы */
+        if (!curr->is_valid) {                   /* Если элемент невалиден */
+            curr = curr->lru_next;               /* Переходим к следующему */
+            continue;                            /* Пропускаем */
+        }
+
+        /* Выбираем элемент с наименьшим количеством обращений */
+        if (curr->access_count < min_access_count) {
+            min_access_count = curr->access_count;  /* Обновляем минимум */
+            candidate = curr;                    /* Запоминаем кандидата */
+            oldest_time = curr->kth_access_time; /* Запоминаем время */
+        }
+        else if (curr->access_count == min_access_count) {
+            /* При равном количестве обращений выбираем самый старый */
+            if (curr->kth_access_time < oldest_time || candidate == NULL) {
+                candidate = curr;                /* Запоминаем нового кандидата */
+                oldest_time = curr->kth_access_time;  /* Обновляем время */
+            }
+        }
+
+        curr = curr->lru_next;                   /* Переходим к следующему */
+    }
+
+    if (candidate) {                             /* Если кандидат найден */
+        /* Удаляем кандидата из кучи, если он там есть */
+        if (candidate->heap_index >= 0 && candidate->heap_index < cache->heap->size) {
+            heap_remove(cache->heap, candidate);
+        }
+        return candidate;                        /* Возвращаем кандидата */
+    }
+
+    /* 3. Если всё ещё нет — берём самый старый LRU-1 */
+    return cache->lru_head;                      /* Возвращаем голову LRU-списка */
+}
+
