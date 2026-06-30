@@ -476,3 +476,27 @@ lru_add_to_tail(struct LRUKCache* cache, CacheItem* item)
     if (!cache->lru_head)                        /* Если голова была пуста */
         cache->lru_head = item;                  /* Становимся головой */
 }
+
+/*
+ * Удаление элемента из LRU-списка
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   item  - элемент для удаления
+ */
+static void
+lru_remove(struct LRUKCache* cache, CacheItem* item)
+{
+    if (item->lru_prev)                          /* Если есть предыдущий */
+        item->lru_prev->lru_next = item->lru_next;  /* Перекидываем указатель */
+    else                                         /* Если элемент в голове */
+        cache->lru_head = item->lru_next;        /* Обновляем голову */
+
+    if (item->lru_next)                          /* Если есть следующий */
+        item->lru_next->lru_prev = item->lru_prev;  /* Перекидываем указатель */
+    else                                         /* Если элемент в хвосте */
+        cache->lru_tail = item->lru_prev;        /* Обновляем хвост */
+
+    item->lru_prev = NULL;                       /* Очищаем указатели */
+    item->lru_next = NULL;
+}
