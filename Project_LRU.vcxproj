@@ -139,6 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="lru_k.cpp" />
     <ClCompile Include="Project_LRU.cpp" />
   </ItemGroup>
   <ItemGroup>
