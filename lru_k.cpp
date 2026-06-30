@@ -777,3 +777,29 @@ lru_k_cache_create(int k, int capacity)
 
     return cache;                              /* Возвращаем созданный кэш */
 }
+
+/*
+ * Освобождение LRU-K кэша и всей связанной памяти
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ */
+void
+lru_k_cache_destroy(LRUKCache* cache)
+{
+    if (!cache)                                /* Если кэш NULL */
+        return;
+
+    CacheItem* curr = cache->lru_head;         /* Начинаем с головы LRU-списка */
+    while (curr) {                             /* Пока есть элементы */
+        CacheItem* next = curr->lru_next;      /* Сохраняем следующий */
+        cache_item_free(curr);                 /* Освобождаем текущий */
+        curr = next;                           /* Переходим к следующему */
+    }
+
+    if (cache->hash_table)                     /* Если есть хеш-таблица */
+        free(cache->hash_table);               /* Освобождаем её */
+    if (cache->heap)                           /* Если есть куча */
+        heap_destroy(cache->heap);             /* Освобождаем кучу */
+    free(cache);                               /* Освобождаем кэш */
+}
