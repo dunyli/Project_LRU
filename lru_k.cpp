@@ -418,3 +418,61 @@ heap_remove(MinHeap* heap, CacheItem* item)
 
     item->heap_index = -1;             /* Помечаем, что элемент не в куче */
 }
+
+/*
+ * Перемещение элемента в конец LRU-списка (сделать самым новым)
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   item  - элемент для перемещения
+ */
+static void
+lru_move_to_tail(struct LRUKCache* cache, CacheItem* item)
+{
+    /* Если элемент уже в хвосте, ничего не делаем */
+    if (item == cache->lru_tail)
+        return;
+
+    /* Удаляем из текущего положения */
+    if (item->lru_prev)                          /* Если есть предыдущий */
+        item->lru_prev->lru_next = item->lru_next;  /* Перекидываем указатель */
+    else                                         /* Если элемент в голове */
+        cache->lru_head = item->lru_next;        /* Обновляем голову */
+
+    if (item->lru_next)                          /* Если есть следующий */
+        item->lru_next->lru_prev = item->lru_prev;  /* Перекидываем указатель */
+
+    /* Вставляем в конец (в хвост) */
+    item->lru_prev = cache->lru_tail;            /* Предыдущий — бывший хвост */
+    item->lru_next = NULL;                       /* Следующего нет */
+
+    if (cache->lru_tail)                         /* Если был хвост */
+        cache->lru_tail->lru_next = item;        /* Бывший хвост указывает на нас */
+
+    cache->lru_tail = item;                      /* Становимся новым хвостом */
+
+    if (!cache->lru_head)                        /* Если голова была пуста */
+        cache->lru_head = item;                  /* Становимся головой */
+}
+
+/*
+ * Добавление нового элемента в LRU-список (в конец)
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   item  - элемент для добавления
+ */
+static void
+lru_add_to_tail(struct LRUKCache* cache, CacheItem* item)
+{
+    item->lru_prev = cache->lru_tail;            /* Предыдущий — бывший хвост */
+    item->lru_next = NULL;                       /* Следующего нет */
+
+    if (cache->lru_tail)                         /* Если был хвост */
+        cache->lru_tail->lru_next = item;        /* Бывший хвост указывает на нас */
+
+    cache->lru_tail = item;                      /* Становимся новым хвостом */
+
+    if (!cache->lru_head)                        /* Если голова была пуста */
+        cache->lru_head = item;                  /* Становимся головой */
+}
