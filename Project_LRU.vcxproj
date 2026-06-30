@@ -140,6 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="lru_k.cpp" />
+    <ClCompile Include="lru_k_test.cpp" />
     <ClCompile Include="Project_LRU.cpp" />
   </ItemGroup>
   <ItemGroup>
