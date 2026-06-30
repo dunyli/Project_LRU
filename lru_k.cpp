@@ -225,3 +225,46 @@ heap_destroy(MinHeap* heap)
         free(heap->items);             /* Освобождаем его */
     free(heap);                        /* Освобождаем структуру кучи */
 }
+
+/*
+ * Сравнение двух элементов для кучи
+ * Сравниваем по времени K-го обращения
+ *
+ * Параметры:
+ *   a - первый элемент
+ *   b - второй элемент
+ *
+ * Возвращает: 1 если a > b, -1 если a < b, 0 если равны
+ */
+static int
+heap_compare(CacheItem* a, CacheItem* b)
+{
+    if (a->kth_access_time > b->kth_access_time)   /* Если время a больше */
+        return 1;
+    if (a->kth_access_time < b->kth_access_time)   /* Если время a меньше */
+        return -1;
+    return 0;                                      /* Времена равны */
+}
+
+/*
+ * Обмен двух элементов в куче
+ * Меняет местами два элемента и обновляет их индексы
+ *
+ * Параметры:
+ *   heap - указатель на кучу
+ *   i    - индекс первого элемента
+ *   j    - индекс второго элемента
+ */
+static void
+heap_swap(MinHeap* heap, int i, int j)
+{
+    CacheItem* temp = heap->items[i];  /* Сохраняем первый элемент */
+    heap->items[i] = heap->items[j];   /* Заменяем первый на второй */
+    heap->items[j] = temp;             /* Заменяем второй на сохранённый */
+
+    /* Обновляем индексы в элементах */
+    if (heap->items[i])
+        heap->items[i]->heap_index = i;
+    if (heap->items[j])
+        heap->items[j]->heap_index = j;
+}
