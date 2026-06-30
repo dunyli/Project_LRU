@@ -1063,3 +1063,29 @@ lru_k_cache_print(LRUKCache* cache)
         index++;
     }
 }
+
+/*
+ * Печать статистики кэша
+ * Выводит сводную статистику использования кэша
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ */
+void
+lru_k_cache_print_stats(LRUKCache* cache)
+{
+    printf("LRU-K Статистика кэша:\n");
+    printf("  K: %d\n", cache->k);
+    printf("  Ёмкость: %d\n", cache->capacity);
+    printf("  Текущий размер: %d\n", cache->size);
+    printf("  Хиты: %d\n", cache->hits);
+    printf("  Промахи: %d\n", cache->misses);
+
+    int total = cache->hits + cache->misses;   /* Общее количество обращений */
+    if (total > 0) {
+        printf("  Hit rate: %.2f%%\n", (float)cache->hits / total * 100);
+    }
+    else {
+        printf("  Hit rate: Н/Д (нет обращений)\n");
+    }
+}
