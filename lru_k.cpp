@@ -569,3 +569,47 @@ hash_table_remove(struct LRUKCache* cache, const char* key)
     }
 }
 
+/*
+ * Создание нового элемента кэша
+ * Выделяет память, копирует ключ и данные
+ *
+ * Параметры:
+ *   key       - ключ элемента
+ *   data      - указатель на данные
+ *   data_size - размер данных
+ *
+ * Возвращает: указатель на созданный элемент или NULL при ошибке
+ */
+static CacheItem*
+cache_item_create(const char* key, void* data, size_t data_size)
+{
+    CacheItem* item = (CacheItem*)malloc(sizeof(CacheItem));  /* Выделяем память */
+    if (!item)                                               /* Проверка */
+        return NULL;
+
+    item->key = (char*)malloc(strlen(key) + 1);  /* Выделяем память под ключ */
+    if (!item->key) {                            /* Проверка */
+        free(item);                              /* Освобождаем элемент */
+        return NULL;
+    }
+    strcpy(item->key, key);                      /* Копируем ключ */
+
+    item->data = malloc(data_size);              /* Выделяем память под данные */
+    if (!item->data) {                           /* Проверка */
+        free(item->key);                         /* Освобождаем ключ */
+        free(item);                              /* Освобождаем элемент */
+        return NULL;
+    }
+    memcpy(item->data, data, data_size);         /* Копируем данные */
+    item->data_size = data_size;                 /* Сохраняем размер данных */
+
+    item->access_history = NULL;                 /* История обращений пуста */
+    item->access_count = 0;                      /* Счётчик обращений = 0 */
+    item->kth_access_time = 0;                   /* Время K-го обращения = 0 */
+    item->lru_next = NULL;                       /* Следующий в LRU-списке */
+    item->lru_prev = NULL;                       /* Предыдущий в LRU-списке */
+    item->heap_index = -1;                       /* Не в куче */
+    item->is_valid = true;                       /* Элемент валиден */
+
+    return item;                                 /* Возвращаем созданный элемент */
+}
