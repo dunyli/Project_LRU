@@ -734,3 +734,46 @@ evict_one(struct LRUKCache* cache)
     cache->size--;                               /* Уменьшаем размер кэша */
 }
 
+/*
+ * Создание LRU-K кэша
+ *
+ * Параметры:
+ *   k        - количество обращений для учёта (обычно 2)
+ *   capacity - максимальное количество элементов в кэше
+ *
+ * Возвращает: указатель на созданный кэш или NULL при ошибке
+ */
+LRUKCache*
+lru_k_cache_create(int k, int capacity)
+{
+    LRUKCache* cache = (LRUKCache*)malloc(sizeof(LRUKCache));  /* Выделяем память */
+    if (!cache)                                                /* Проверка */
+        return NULL;
+
+    cache->k = k;                              /* Сохраняем параметр K */
+    cache->capacity = capacity;                /* Сохраняем ёмкость */
+    cache->size = 0;                           /* Начальный размер = 0 */
+    cache->hits = 0;                           /* Хитов нет */
+    cache->misses = 0;                         /* Промахов нет */
+
+    cache->lru_head = NULL;                    /* LRU-список пуст */
+    cache->lru_tail = NULL;
+
+    /* Создаём хеш-таблицу (размер в 2 раза больше ёмкости) */
+    cache->hash_size = capacity * 2 + 1;
+    cache->hash_table = (CacheItem**)calloc(cache->hash_size, sizeof(CacheItem*));
+    if (!cache->hash_table) {                  /* Проверка */
+        free(cache);
+        return NULL;
+    }
+
+    /* Создаём кучу */
+    cache->heap = heap_create(capacity);
+    if (!cache->heap) {                        /* Проверка */
+        free(cache->hash_table);
+        free(cache);
+        return NULL;
+    }
+
+    return cache;                              /* Возвращаем созданный кэш */
+}
