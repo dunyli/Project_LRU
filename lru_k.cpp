@@ -803,3 +803,102 @@ lru_k_cache_destroy(LRUKCache* cache)
         heap_destroy(cache->heap);             /* Освобождаем кучу */
     free(cache);                               /* Освобождаем кэш */
 }
+
+/*
+ * Доступ к элементу кэша (чтение)
+ * Обновляет историю обращений и LRU-порядок
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   key   - ключ элемента
+ *
+ * Возвращает: указатель на данные или NULL если элемент не найден
+ */
+void*
+lru_k_cache_get(LRUKCache* cache, const char* key)
+{
+    CacheItem* item = hash_table_find(cache, key);  /* Ищем элемент по ключу */
+
+    if (!item || !item->is_valid) {            /* Если элемент не найден или невалиден */
+        cache->misses++;                       /* Увеличиваем счётчик промахов */
+        return NULL;                           /* Возвращаем NULL */
+    }
+
+    time_t now = time(NULL);                   /* Получаем текущее время */
+    access_history_add(item, now, cache->k);   /* Добавляем обращение в историю */
+    lru_move_to_tail(cache, item);             /* Перемещаем в конец LRU-списка */
+
+    /* Обновляем позицию в куче */
+    if (item->access_count >= cache->k && item->heap_index >= 0) {
+        heap_update(cache->heap, item);
+    }
+
+    cache->hits++;                             /* Увеличиваем счётчик хитов */
+    return item->data;                         /* Возвращаем данные */
+}
+
+/*
+ * Вставка элемента в кэш
+ * Если элемент уже существует — обновляет данные
+ * Если кэш заполнен — вытесняет один элемент
+ *
+ * Параметры:
+ *   cache     - указатель на кэш
+ *   key       - ключ элемента
+ *   data      - указатель на данные
+ *   data_size - размер данных в байтах
+ *
+ * Возвращает: true если успешно, false если ошибка
+ */
+bool
+lru_k_cache_put(LRUKCache* cache, const char* key, void* data, size_t data_size)
+{
+    CacheItem* existing = hash_table_find(cache, key);  /* Проверяем, есть ли уже элемент */
+
+    if (existing && existing->is_valid) {      /* Если элемент уже существует */
+        /* Обновляем данные */
+        if (existing->data) {                  /* Если старые данные есть */
+            free(existing->data);              /* Освобождаем их */
+        }
+        existing->data = malloc(data_size);    /* Выделяем память под новые данные */
+        if (!existing->data)                   /* Проверка */
+            return false;
+        memcpy(existing->data, data, data_size);  /* Копируем новые данные */
+        existing->data_size = data_size;       /* Сохраняем размер */
+
+        time_t now = time(NULL);               /* Получаем текущее время */
+        access_history_add(existing, now, cache->k);  /* Добавляем обращение */
+        lru_move_to_tail(cache, existing);     /* Перемещаем в конец LRU-списка */
+
+        /* Обновляем позицию в куче */
+        if (existing->access_count >= cache->k && existing->heap_index >= 0) {
+            heap_update(cache->heap, existing);
+        }
+
+        return true;                           /* Успешно обновлено */
+    }
+
+    /* Если кэш заполнен, вытесняем один элемент */
+    if (cache->size >= cache->capacity) {
+        evict_one(cache);
+    }
+
+    /* Создаём новый элемент */
+    CacheItem* new_item = cache_item_create(key, data, data_size);
+    if (!new_item)                             /* Проверка */
+        return false;
+
+    time_t now = time(NULL);                   /* Получаем текущее время */
+    access_history_add(new_item, now, cache->k);  /* Добавляем первое обращение */
+
+    hash_table_insert(cache, new_item);        /* Вставляем в хеш-таблицу */
+    lru_add_to_tail(cache, new_item);          /* Добавляем в LRU-список */
+
+    /* Добавляем в кучу */
+    if (new_item->access_count >= cache->k) {
+        heap_insert(cache->heap, new_item);
+    }
+
+    cache->size++;                             /* Увеличиваем размер кэша */
+    return true;                               /* Успешно вставлено */
+}
