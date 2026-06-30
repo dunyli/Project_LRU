@@ -346,3 +346,75 @@ heap_insert(MinHeap* heap, CacheItem* item)
 
     heap_heapify_up(heap, heap->size - 1);  /* Восстанавливаем свойства кучи */
 }
+
+/*
+ * Извлечение минимального элемента из кучи
+ * Удаляет корень и восстанавливает свойства кучи
+ *
+ * Параметры:
+ *   heap - указатель на кучу
+ *
+ * Возвращает: указатель на минимальный элемент или NULL
+ */
+static CacheItem*
+heap_extract_min(MinHeap* heap)
+{
+    if (heap->size == 0)               /* Если куча пуста */
+        return NULL;
+
+    CacheItem* min_item = heap->items[0];  /* Сохраняем минимальный элемент */
+
+    /* Перемещаем последний элемент в корень */
+    heap->items[0] = heap->items[heap->size - 1];
+    heap->items[0]->heap_index = 0;
+    heap->size--;                      /* Уменьшаем размер кучи */
+
+    heap_heapify_down(heap, 0);        /* Восстанавливаем свойства кучи */
+
+    return min_item;                   /* Возвращаем минимальный элемент */
+}
+
+/*
+ * Обновление позиции элемента в куче
+ * Используется когда меняется время K-го обращения
+ *
+ * Параметры:
+ *   heap - указатель на кучу
+ *   item - элемент для обновления
+ */
+static void
+heap_update(MinHeap* heap, CacheItem* item)
+{
+    int index = item->heap_index;      /* Получаем индекс элемента */
+    heap_heapify_down(heap, index);    /* Сначала просеиваем вниз */
+    heap_heapify_up(heap, index);      /* Затем просеиваем вверх */
+}
+
+/*
+ * Удаление элемента из кучи
+ * Удаляет произвольный элемент и восстанавливает свойства кучи
+ *
+ * Параметры:
+ *   heap - указатель на кучу
+ *   item - элемент для удаления
+ */
+static void
+heap_remove(MinHeap* heap, CacheItem* item)
+{
+    int index = item->heap_index;      /* Получаем индекс элемента */
+
+    /* Перемещаем последний элемент на место удаляемого */
+    if (index < heap->size - 1) {
+        heap->items[index] = heap->items[heap->size - 1];
+        heap->items[index]->heap_index = index;
+        heap->size--;                  /* Уменьшаем размер кучи */
+        /* Восстанавливаем свойства кучи */
+        heap_heapify_down(heap, index);
+        heap_heapify_up(heap, index);
+    }
+    else {
+        heap->size--;                  /* Просто уменьшаем размер */
+    }
+
+    item->heap_index = -1;             /* Помечаем, что элемент не в куче */
+}
