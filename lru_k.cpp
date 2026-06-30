@@ -961,3 +961,105 @@ lru_k_cache_clear(LRUKCache* cache)
 
     cache->heap->size = 0;                     /* Очищаем кучу */
 }
+
+/*
+ * Получение статистики кэша
+ *
+ * Параметры:
+ *   cache    - указатель на кэш
+ *   hits     - указатель для сохранения количества попаданий (может быть NULL)
+ *   misses   - указатель для сохранения количества промахов (может быть NULL)
+ *   size     - указатель для сохранения текущего размера (может быть NULL)
+ *   capacity - указатель для сохранения ёмкости (может быть NULL)
+ */
+void
+lru_k_cache_stats(LRUKCache* cache, int* hits, int* misses, int* size, int* capacity)
+{
+    if (hits)                                  /* Если указатель не NULL */
+        *hits = cache->hits;                   /* Сохраняем количество хитов */
+    if (misses)                                /* Если указатель не NULL */
+        *misses = cache->misses;               /* Сохраняем количество промахов */
+    if (size)                                  /* Если указатель не NULL */
+        *size = cache->size;                   /* Сохраняем текущий размер */
+    if (capacity)                              /* Если указатель не NULL */
+        *capacity = cache->capacity;           /* Сохраняем ёмкость */
+}
+
+/*
+ * Получение текущего размера кэша
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *
+ * Возвращает: текущее количество элементов в кэше
+ */
+int
+lru_k_cache_size(LRUKCache* cache)
+{
+    return cache->size;                        /* Возвращаем размер кэша */
+}
+
+/*
+ * Получение ёмкости кэша
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *
+ * Возвращает: максимальное количество элементов в кэше
+ */
+int
+lru_k_cache_capacity(LRUKCache* cache)
+{
+    return cache->capacity;                    /* Возвращаем ёмкость кэша */
+}
+
+/*
+ * Получение параметра K
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *
+ * Возвращает: параметр K (количество обращений для учёта)
+ */
+int
+lru_k_cache_k(LRUKCache* cache)
+{
+    return cache->k;                           /* Возвращаем параметр K */
+}
+
+/*
+ * Печать содержимого кэша (для отладки)
+ * Выводит все элементы с их историей обращений
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ */
+void
+lru_k_cache_print(LRUKCache* cache)
+{
+    printf("LRU-K Кэш (K=%d, размер=%d/%d, хиты=%d, промахи=%d):\n",
+        cache->k, cache->size, cache->capacity, cache->hits, cache->misses);
+
+    CacheItem* curr = cache->lru_head;         /* Начинаем с головы LRU-списка */
+    int index = 0;                             /* Счётчик для нумерации */
+
+    while (curr) {                             /* Пока есть элементы */
+        printf("  [%d] '%s': размер_данных=%zu, обращений=%d, время_K_обращения=%ld",
+            index, curr->key, curr->data_size, curr->access_count, curr->kth_access_time);
+
+        /* Выводим историю обращений */
+        AccessNode* acc = curr->access_history;
+        printf(", история=[");
+        while (acc) {
+            printf("%ld", acc->access_time);
+            if (acc->next)
+                printf(", ");
+            acc = acc->next;
+        }
+        printf("]");
+
+        printf("\n");
+        curr = curr->lru_next;                 /* Переходим к следующему */
+        index++;
+    }
+}
