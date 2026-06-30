@@ -500,3 +500,72 @@ lru_remove(struct LRUKCache* cache, CacheItem* item)
     item->lru_prev = NULL;                       /* Очищаем указатели */
     item->lru_next = NULL;
 }
+
+/*
+ * Поиск элемента в хеш-таблице по ключу
+ * Использует линейное пробирование для разрешения коллизий
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   key   - ключ для поиска
+ *
+ * Возвращает: указатель на найденный элемент или NULL
+ */
+static CacheItem*
+hash_table_find(struct LRUKCache* cache, const char* key)
+{
+    unsigned int index = fnv1a_hash(key, cache->hash_size);  /* Вычисляем хеш */
+    CacheItem* item = cache->hash_table[index];   /* Получаем элемент по индексу */
+
+    while (item) {                               /* Пока есть элемент */
+        if (strcmp(item->key, key) == 0)         /* Если ключи совпадают */
+            return item;                         /* Возвращаем найденный элемент */
+        index = (index + 1) % cache->hash_size;  /* Переходим к следующей ячейке */
+        item = cache->hash_table[index];         /* Получаем следующий элемент */
+    }
+
+    return NULL;                                 /* Ключ не найден */
+}
+
+/*
+ * Вставка элемента в хеш-таблицу
+ * Использует линейное пробирование для разрешения коллизий
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   item  - элемент для вставки
+ */
+static void
+hash_table_insert(struct LRUKCache* cache, CacheItem* item)
+{
+    unsigned int index = fnv1a_hash(item->key, cache->hash_size);  /* Вычисляем хеш */
+
+    /* Ищем свободное место (линейное пробирование) */
+    while (cache->hash_table[index] != NULL) {
+        index = (index + 1) % cache->hash_size;
+    }
+
+    cache->hash_table[index] = item;             /* Вставляем элемент */
+}
+
+/*
+ * Удаление элемента из хеш-таблицы
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   key   - ключ для удаления
+ */
+static void
+hash_table_remove(struct LRUKCache* cache, const char* key)
+{
+    unsigned int index = fnv1a_hash(key, cache->hash_size);  /* Вычисляем хеш */
+
+    while (cache->hash_table[index] != NULL) {    /* Пока есть элементы */
+        if (strcmp(cache->hash_table[index]->key, key) == 0) {  /* Если ключ совпадает */
+            cache->hash_table[index] = NULL;      /* Удаляем элемент */
+            return;                              /* Выходим */
+        }
+        index = (index + 1) % cache->hash_size;   /* Переходим к следующей ячейке */
+    }
+}
+
