@@ -181,3 +181,47 @@ access_history_add(CacheItem* item, time_t access_time, int k)
         }
     }
 }
+
+/*
+ * Создание минимальной кучи
+ * Выделяет память и инициализирует структуру кучи
+ *
+ * Параметры:
+ *   capacity - начальная вместимость кучи
+ *
+ * Возвращает: указатель на кучу или NULL при ошибке
+ */
+static MinHeap*
+heap_create(int capacity)
+{
+    MinHeap* heap = (MinHeap*)malloc(sizeof(MinHeap));  /* Выделяем память для кучи */
+    if (!heap)                                          /* Проверка выделения */
+        return NULL;
+
+    heap->items = (CacheItem**)malloc(capacity * sizeof(CacheItem*));  /* Массив элементов */
+    if (!heap->items) {                                /* Проверка выделения */
+        free(heap);                                    /* Освобождаем кучу */
+        return NULL;
+    }
+
+    heap->size = 0;                    /* Начальный размер кучи */
+    heap->capacity = capacity;         /* Ёмкость кучи */
+
+    return heap;                       /* Возвращаем созданную кучу */
+}
+
+/*
+ * Освобождение кучи
+ *
+ * Параметры:
+ *   heap - указатель на кучу
+ */
+static void
+heap_destroy(MinHeap* heap)
+{
+    if (!heap)                         /* Если куча NULL - ничего не делаем */
+        return;
+    if (heap->items)                   /* Если массив элементов существует */
+        free(heap->items);             /* Освобождаем его */
+    free(heap);                        /* Освобождаем структуру кучи */
+}
