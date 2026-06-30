@@ -320,3 +320,29 @@ heap_heapify_down(MinHeap* heap, int index)
         heap_heapify_down(heap, smallest);
     }
 }
+
+/*
+ * Вставка элемента в кучу
+ * Добавляет элемент и восстанавливает свойства кучи
+ *
+ * Параметры:
+ *   heap - указатель на кучу
+ *   item - элемент для вставки
+ */
+static void
+heap_insert(MinHeap* heap, CacheItem* item)
+{
+    /* Проверяем, нужно ли увеличить ёмкость кучи */
+    if (heap->size >= heap->capacity) {
+        heap->capacity *= 2;           /* Удваиваем ёмкость */
+        heap->items = (CacheItem**)realloc(heap->items, heap->capacity * sizeof(CacheItem*));
+        if (!heap->items)              /* Проверка выделения */
+            return;
+    }
+
+    heap->items[heap->size] = item;    /* Добавляем элемент в конец */
+    item->heap_index = heap->size;     /* Сохраняем индекс элемента */
+    heap->size++;                      /* Увеличиваем размер кучи */
+
+    heap_heapify_up(heap, heap->size - 1);  /* Восстанавливаем свойства кучи */
+}
