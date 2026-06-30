@@ -902,3 +902,62 @@ lru_k_cache_put(LRUKCache* cache, const char* key, void* data, size_t data_size)
     cache->size++;                             /* Увеличиваем размер кэша */
     return true;                               /* Успешно вставлено */
 }
+
+/*
+ * Удаление элемента из кэша
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ *   key   - ключ элемента
+ *
+ * Возвращает: true если элемент найден и удалён, false если не найден
+ */
+bool
+lru_k_cache_remove(LRUKCache* cache, const char* key)
+{
+    CacheItem* item = hash_table_find(cache, key);  /* Ищем элемент */
+    if (!item || !item->is_valid)              /* Если элемент не найден */
+        return false;
+
+    lru_remove(cache, item);                   /* Удаляем из LRU-списка */
+    hash_table_remove(cache, key);             /* Удаляем из хеш-таблицы */
+
+    /* Удаляем из кучи, если он там есть */
+    if (item->heap_index >= 0 && item->heap_index < cache->heap->size) {
+        heap_remove(cache->heap, item);
+    }
+
+    cache_item_free(item);                     /* Освобождаем память */
+    cache->size--;                             /* Уменьшаем размер кэша */
+    return true;                               /* Успешно удалено */
+}
+
+/*
+ * Очистка кэша (удаление всех элементов)
+ *
+ * Параметры:
+ *   cache - указатель на кэш
+ */
+void
+lru_k_cache_clear(LRUKCache* cache)
+{
+    CacheItem* curr = cache->lru_head;         /* Начинаем с головы LRU-списка */
+    while (curr) {                             /* Пока есть элементы */
+        CacheItem* next = curr->lru_next;      /* Сохраняем следующий */
+        cache_item_free(curr);                 /* Освобождаем текущий */
+        curr = next;                           /* Переходим к следующему */
+    }
+
+    cache->lru_head = NULL;                    /* LRU-список пуст */
+    cache->lru_tail = NULL;
+    cache->size = 0;                           /* Размер = 0 */
+    cache->hits = 0;                           /* Сбрасываем хиты */
+    cache->misses = 0;                         /* Сбрасываем промахи */
+
+    /* Очищаем хеш-таблицу */
+    for (int i = 0; i < cache->hash_size; i++) {
+        cache->hash_table[i] = NULL;
+    }
+
+    cache->heap->size = 0;                     /* Очищаем кучу */
+}
